@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI Generator Example</title>
+    <style>
+        /* Стили для чекбоксов управления */
+        .control-panel {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+
+        .control-panel label {
+            margin-right: 15px;
+            cursor: pointer;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="./styles.css">
+</head>
+<body>
+    <div id="app">
+        <h2>UI Generator Example</h2>
+        <p>Check the console for logs.</p>
+
+        <!-- НОВОЕ: Панель управления видимостью -->
+        <div class="control-panel">
+            <label>
+                <input type="checkbox" id="toggle-header" checked> Show Header
+            </label>
+            <label>
+                <input type="checkbox" id="toggle-tabs" checked> Show Tabs
+            </label>
+            <label>
+                <input type="checkbox" id="toggle-graph" checked> Show Graph
+            </label>
+        </div>
+        <!-- КОНЕЦ НОВОГО -->
+    </div>
+
+    <script src="../src/logger.js"></script>
+    <script src="../src/chart_renderer.js"></script>
+    <script src="../src/event_manager.js"></script>
+    <script src="../src/schema_validator.js"></script>
+    <script src="../src/base_element.js"></script>
+    <script src="../src/container_element.js"></script>
+    <script src="../src/parameter_element.js"></script>
+    <script src="../src/command_element.js"></script>
+    <script src="../src/element_factory.js"></script>
+    <script src="../src/state_manager.js"></script>
+    <script src="../src/data_connector.js"></script>
+    <script src="../src/ui_generator.js"></script>
+    <script src="example_usage.js"></script>
+</body>
+</html>

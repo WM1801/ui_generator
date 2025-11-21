@@ -1,0 +1,72 @@
+.controller-container { margin: 20px; padding: 10px; border: 1px solid #ccc; }
+.main-container { display: flex; gap: 10px; /* Расстояние между колонками */ }
+.left-column { background-color: #007bff; flex: 1; /* Занимает доступное пространство */}
+.right-column {background-color: #28a745; flex: 1;}
+.tabs-container { margin-bottom: 10px; }
+.tabs-list { list-style: none; padding: 0; margin: 0; display: flex; }
+.tabs-list li { margin-right: 10px; }
+.tabs-list button { padding: 5px 10px; cursor: pointer; }
+.tabs-list button.active { background-color: #007bff; color: white; }
+.tab-content { display: none; padding: 10px; border: 1px solid #ddd; }
+.tab-content.active { display: block; }
+.group { margin-bottom: 15px; }
+.group-content { margin-top: 5px;  }
+.item { display: flex;  align-items: center; margin-bottom: 5px; }
+.item-label { width: 200px; }
+.item-control { flex-grow: 1; }
+.item-units { margin-left: 10px;  }
+.command-button {
+    padding: 5px 10px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    transition: background-color 0.1s, border-color 0.1s; /* Плавный переход для нажатия */
+    width: 150px;
+}
+
+.command-button.danger { background-color: #dc3545; color: white; border-color: #dc3545;  }
+.command-button.primary { background-color: #007bff; color: white; border-color: #007bff; width: 100; }
+.command-button.base { background-color: #e0e7ee; color: black; border-color: #6c757d; width: 100; }
+.command-button.success { background-color: #28a745; color: white; border-color: #28a745; width: 100;}
+.toggle-button {  /* Стили для toggle кнопки */ }
+.toggle-button.active {
+    background-color: #28a745; /* Зеленый для активного состояния */
+    color: white;
+}
+
+.command-button.clicked {
+    background-color: #adb5bd; /* Серый цвет для нажатия */
+    border-color: #6c757d;
+    transform: scale(0.98); /* Легкое сжатие */
+}
+
+.slider-container {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Расстояние между слайдером и отображением значения */
+}
+
+.slider-input {
+    flex-grow: 1; /* Занимает доступное пространство */
+}
+
+.slider-value-display {
+    min-width: 30px; /* Чтобы не прыгало при изменении числа */
+    text-align: center;
+}
+
+.select-input {
+    padding: 2px 5px;
+}
+
+.radio-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px; /* Расстояние между radio-item */
+}
+
+.radio-item {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Расстояние между radio и label */
+}
