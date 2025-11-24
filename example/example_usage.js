@@ -1,6 +1,7 @@
 // Пример использования
 
 const exampleSchema = {
+    "schema_version": "1.0.0",
     "controller": { 
         "name": "motor1", 
         "display_name": "Motor Controller 1",

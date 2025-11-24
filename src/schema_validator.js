@@ -1,11 +1,19 @@
 // schema_validator.js
 class SchemaValidator {
+    static SUPPORTED_VERSIONS = ['1.0.0']; 
     static validate(schema) {
         const errors = [];
 
         if (!schema || typeof schema !== 'object') {
             errors.push('Схема должна быть объектом.');
             return { valid: false, errors };
+        }
+
+        const schemaVersion = schema.schema_version;
+        if (!schemaVersion) {
+            errors.push('Схема должна содержать поле schema_version.');
+        } else if (!this.SUPPORTED_VERSIONS.includes(schemaVersion)) {
+            errors.push(`Версия схемы '${schemaVersion}' не поддерживается. Поддерживаемые версии: ${this.SUPPORTED_VERSIONS.join(', ')}.`);
         }
 
         if (!schema.controller || typeof schema.controller !== 'object') {
