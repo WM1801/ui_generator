@@ -1,8 +1,18 @@
 .controller-container { margin: 20px; padding: 10px; border: 1px solid #ccc; }
-.main-container { display: flex; gap: 10px; /* Расстояние между колонками */ }
-.left-column { background-color: #007bff; flex: 1; /* Занимает доступное пространство */}
-.right-column {background-color: #28a745; flex: 1;}
-.tabs-container { margin-bottom: 10px; }
+.main-container { display: flex; gap: 10px; /* Расстояние между колонками */
+    max-height: 100vh; /* Например, 80% высоты вьюпорта */
+    overflow: auto; /* Добавить прокрутку, если содержимое превышает max-height */ }
+/*.left-column { background-color: #007bff; flex: 1;} /* Занимает доступное пространство */
+/*.right-column {background-color: #28a745; flex: 1;}*/
+.tabs-container-wrapper {
+    /* Можно задать начальную ширину, если нужно */
+    /* flex: 1; */ /* Или конкретное значение, если нужен баланс с графиком */
+    /* max-height: 100%; */ /* Необязательно */
+    display: flex; /* Делаем его flex-контейнером */
+    flex-direction: column; /* Если внутри могут быть заголовки и несколько canvas */
+    flex-grow: 1; /*  Растягиваем по вертикали на всё доступное место */
+}
+.tabs-container { margin-bottom: 10px;  }
 .tabs-list { list-style: none; padding: 0; margin: 0; display: flex; }
 .tabs-list li { margin-right: 10px; }
 .tabs-list button { padding: 5px 10px; cursor: pointer; }
@@ -23,11 +33,12 @@
     transition: background-color 0.1s, border-color 0.1s; /* Плавный переход для нажатия */
     width: 150px;
 }
-
+<h2 id="chart-title-motor1-graph">Main Graph</h2>
 .command-button.danger { background-color: #dc3545; color: white; border-color: #dc3545;  }
 .command-button.primary { background-color: #007bff; color: white; border-color: #007bff; width: 100; }
 .command-button.base { background-color: #e0e7ee; color: black; border-color: #6c757d; width: 100; }
 .command-button.success { background-color: #28a745; color: white; border-color: #28a745; width: 100;}
+
 .toggle-button {  /* Стили для toggle кнопки */ }
 .toggle-button.active {
     background-color: #28a745; /* Зеленый для активного состояния */
@@ -69,4 +80,28 @@
     display: flex;
     align-items: center;
     gap: 5px; /* Расстояние между radio и label */
+}
+
+/* --- Стили для контейнера графика и canvas --- */
+.graphics-container-wrapper {
+    display: flex; /* Делаем его flex-контейнером */
+    flex-direction: column; /* Если внутри могут быть заголовки и несколько canvas */
+    flex-grow: 1; /*  Растягиваем по вертикали на всё доступное место */
+    min-height: 0; /* Позволяет flex-grow работать */
+    min-width: 0;  /* Позволяет flex-grow работать */
+}
+.chart-container {
+    /* Убедимся, что контейнер растягивается */
+    display: flex; /* Используем flex, чтобы canvas внутри тоже мог растягиваться */
+    flex-direction: column; /* Если нужен заголовок сверху */
+    flex-grow: 1; /* Пытаемся занять всё доступное вертикальное пространство в .right-column */
+    min-height: 0; /* Позволяет flex-grow работать правильно внутри .right-column */
+    min-width: 0;  /* Позволяет flex-grow работать правильно внутри .right-column */
+}
+
+.chart-container canvas {
+    /* Убедимся, что canvas растягивается на 100% ширины и высоты своего родителя (.chart-container) */
+    width: 100% !important; /* !important может потребоваться, чтобы перебить inline-стили Chart.js */
+    height: 100% !important; /* !important может потребоваться, чтобы перебить inline-стили Chart.js */
+    /* display: block; */ /* Chart.js обычно добавляет это, но можно указать явно */
 }

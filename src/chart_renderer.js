@@ -1,51 +1,43 @@
 // chart_renderer.js
-// chart_renderer.js
 class ChartRenderer {
     constructor(graphicSchema, controllerName, logger = GlobalLogger) {
         this.id = graphicSchema.id;
         this.title = graphicSchema.title;
-        this.visibilityTitle = graphicSchema.visibility_title !== false; // По умолчанию true
+        // Убираем this.visibilityTitle, управляем через Chart.js
+        // this.visibilityTitle = graphicSchema.visibility_title !== false;
         this.controllerName = controllerName;
         this.logger = logger;
-        this.domElement = null; // Корневой элемент графика (div или canvas)
-        this.canvasElement = null; // Сам canvas
-        this.chartInstance = null; // Экземпляр Chart.js (если используется)
-        this.config = this._getDefaultConfig(); // Базовая конфигурация
-        // Применяем frontend_props из graphicSchema, если они есть
+        this.domElement = null;
+        this.canvasElement = null;
+        this.chartInstance = null;
+        this.config = this._getDefaultConfig();
+        // Применяем frontend_props
         if (graphicSchema.frontend_props) {
             this._applyFrontendProps(graphicSchema.frontend_props);
         }
+        // Устанавливаем начальное состояние заголовка из схемы
+        this.config.options.plugins.title.display = graphicSchema.visibility_title !== false;
+        this.config.options.plugins.title.text = this.title;
+        //ResizeObserver ---
+        this.resizeObserver = null;
     }
 
-    /**
-     * Применяет свойства из frontend_props к конфигурации.
-     * @param {Object} frontendProps - Объект frontend_props из схемы.
-     * @private
-     */
     _applyFrontendProps(frontendProps) {
-        // Пример: обновление типа графика, цветов, меток и т.д.
         if (frontendProps.type) {
             this.config.type = frontendProps.type;
         }
         if (frontendProps.options) {
-            // Глубокое объединение или простое присваивание, в зависимости от нужд
+            // Глубокое объединение предпочтительно
             this.config.options = { ...this.config.options, ...frontendProps.options };
         }
         if (frontendProps.data && frontendProps.data.datasets) {
-            // Обновление наборов данных
             this.config.data.datasets = frontendProps.data.datasets;
         }
-        // ... другие свойства ...
     }
 
-    /**
-     * Возвращает базовую конфигурацию для Chart.js.
-     * @private
-     * @returns {Object}
-     */
     _getDefaultConfig() {
         return {
-            type: 'line', // Тип по умолчанию
+            type: 'line',
             data: {
                 labels: [],
                 datasets: [{
@@ -67,94 +59,83 @@ class ChartRenderer {
                 },
                 plugins: {
                     title: {
-                        display: this.visibilityTitle, // Используем visibility_title для заголовка Chart.js
-                        text: this.title
+                        display: true, // По умолчанию включено, перезапишется в конструкторе
+                        text: ''       // По умолчанию пусто, перезапишется в конструкторе
                     }
                 }
             }
         };
     }
 
-    /**
-     * Рендерит DOM-элементы графика.
-     * @returns {HTMLElement} - Корневой элемент графика.
-     */
     render() {
         const containerDiv = document.createElement('div');
         containerDiv.className = 'chart-container';
         containerDiv.id = `chart-container-${this.controllerName}-${this.id}`;
         this.domElement = containerDiv;
 
-        // Заголовок графика (если нужен)
-        if (this.title && this.visibilityTitle) {
-            const titleH2 = document.createElement('h2');
-            titleH2.textContent = this.title;
-            titleH2.id = `chart-title-${this.controllerName}-${this.id}`;
-            containerDiv.appendChild(titleH2);
-        }
-
         // Canvas для графика
         this.canvasElement = document.createElement('canvas');
         this.canvasElement.id = `chart-canvas-${this.controllerName}-${this.id}`;
         containerDiv.appendChild(this.canvasElement);
 
-        // Инициализация Chart.js (предполагается, что Chart.js подключен)
-        // if (typeof Chart !== 'undefined') {
-        //     this.chartInstance = new Chart(this.canvasElement, this.config);
-        // } else {
-        //     this.logger.warn('Chart.js не найден. График не будет отрисован с Chart.js.');
-        //     // Можно реализовать отрисовку на чистом canvas
-        // }
+        if (typeof Chart !== 'undefined') {
+            this.chartInstance = new Chart(this.canvasElement, this.config);
+            this.logger.info(`Chart.js экземпляр создан для графика ${this.id}`);
+            this._setupResizeObserver();
+        } else {
+            this.logger.warn('Chart.js не найден. График не будет отрисован с Chart.js.');
+        }
 
         return containerDiv;
     }
 
-    /**
-     * Обновляет данные графика.
-     * @param {Array} labels - Метки по оси X.
-     * @param {Array} data - Массив значений.
-     */
+    // --- Настройка ResizeObserver ---
+    _setupResizeObserver() {
+        if (typeof ResizeObserver !== 'undefined' && this.domElement && this.chartInstance) {
+            this.resizeObserver = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    // entry.target - это domElement (chart-container)
+                    // entry.contentRect - его новые размеры
+                    // console.log('ResizeObserver: chart-container размеры изменились', entry.contentRect);
+                    // Вызываем resize у Chart.js
+                    if (this.chartInstance) {
+                        // console.log('ResizeObserver: вызов chartInstance.resize() для', this.id);
+                        this.chartInstance.resize();
+                    }
+                }
+            });
+            this.resizeObserver.observe(this.domElement); // Наблюдаем за chart-container
+        } else {
+            this.logger.warn('ResizeObserver не поддерживается или chartInstance не создан.');
+        }
+    }
+
     updateData(labels, data) {
         if (this.chartInstance) {
-            // Обновление данных Chart.js
             this.chartInstance.data.labels = labels;
-            this.chartInstance.data.datasets[0].data = data;
-            this.chartInstance.update();
-        } else {
-            // Обновление данных для кастомной отрисовки на canvas
-            // this.redrawCanvas(labels, data);
-        }
-    }
-
-    /**
-     * Обновляет видимость заголовка графика.
-     * @param {boolean} isVisible - Видимость заголовка.
-     */
-    updateTitleVisibility(isVisible) {
-        this.visibilityTitle = isVisible;
-        if (this.chartInstance) {
-            // Обновление опций Chart.js
-            this.chartInstance.options.plugins.title.display = isVisible;
-            this.chartInstance.options.plugins.title.text = isVisible ? this.title : '';
-            this.chartInstance.update();
-        } else {
-            // Обновление DOM для заголовка
-            const titleElement = this.domElement.querySelector('h2');
-            if (titleElement) {
-                titleElement.style.display = isVisible ? '' : 'none';
+            if (this.chartInstance.data.datasets && this.chartInstance.data.datasets[0]) {
+                this.chartInstance.data.datasets[0].data = data;
             }
+            this.chartInstance.update();
         }
     }
 
-    /**
-     * Уничтожает ресурсы графика (например, уничтожает экземпляр Chart.js).
-     */
+    updateTitleVisibility(isVisible) {
+        // Обновляем опции Chart.js
+        if (this.chartInstance) {
+             this.chartInstance.options.plugins.title.display = isVisible;
+             // Текст можно оставить как есть или обновить, если нужно
+             // this.chartInstance.options.plugins.title.text = isVisible ? this.title : '';
+             this.chartInstance.update();
+        }
+        // Больше не нужно обновлять DOM, так как h2 не создаётся
+    }
+
     destroy() {
         if (this.chartInstance) {
             this.chartInstance.destroy();
             this.chartInstance = null;
         }
-        // Удаление DOM-элемента из родителя можно сделать снаружи, в UIGenerator
         this.domElement = null;
         this.canvasElement = null;
     }

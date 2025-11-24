@@ -71,19 +71,30 @@ class GroupElement extends UIElement {
 
 class TabsContainerElement extends UIElement {
     constructor(schema, controllerName, factory, eventManager, logger = GlobalLogger) {
-        super(schema, controllerName, null, eventManager, logger); // handlers не нужны для контейнера
+        super(schema, controllerName, null, eventManager, logger);
         this.factory = factory;
-        // Схема tabs теперь внутри schema.tabs
         this.children = schema.tabs.map(tabSchema =>
             this.factory.createElement({ ...tabSchema, type: 'tab' }, controllerName)
         ).filter(el => el !== null);
+        // --- Читаем width из схемы ---
+        this.width = schema.width || 'auto'; // По умолчанию auto, если не задано
+        // ---
     }
 
     render() {
         const containerDiv = document.createElement('div');
-        containerDiv.className = 'tabs-container-wrapper'; // Новый класс для стиля
+        containerDiv.className = 'tabs-container-wrapper';
         containerDiv.id = `tabs-container-wrapper-${this.controllerName}-${this.id}`;
 
+        // --- Применяем ширину ---
+        containerDiv.style.flexBasis = this.width;
+        containerDiv.style.flexShrink = 0; // Не сжимать, если другие элементы требуют места
+        // containerDiv.style.flexGrow = 0; // Не растягивать, если есть свободное место (если нужно фикс. ширину)
+        // или использовать shorthand: containerDiv.style.flex = `0 0 ${this.width}`; // grow shrink basis
+        // или если нужно, чтобы элемент мог расти, но имел начальный размер: containerDiv.style.flex = `1 0 ${this.width}`;
+        // Для 50/50 или других фикс. пропорций: containerDiv.style.flex = `0 0 ${this.width}`;
+        // ---
+        // ... (остальной код render как есть) ...
         const tabsListContainer = document.createElement('div');
         tabsListContainer.className = 'tabs-list-container';
         const tabsListUl = document.createElement('ul');
@@ -121,18 +132,26 @@ class TabsContainerElement extends UIElement {
 
 class GraphicsContainerElement extends UIElement {
     constructor(schema, controllerName, factory, eventManager, logger = GlobalLogger) {
-        super(schema, controllerName, null, eventManager, logger); // handlers не нужны
-        this.factory = factory; // Хотя factory не используется напрямую, ChartRenderer создаётся отдельно
-        this.graphicsSchema = schema.graphics; // Сохраняем схему графиков
-        this.chartRenderers = []; // Массив ChartRenderer
+        super(schema, controllerName, null, eventManager, logger);
+        this.factory = factory;
+        this.graphicsSchema = schema.graphics;
+        this.chartRenderers = [];
+        // --- Читаем width из схемы ---
+        this.width = schema.width || 'auto';
+        // ---
     }
 
     render() {
         const containerDiv = document.createElement('div');
-        containerDiv.className = 'graphics-container-wrapper'; // Новый класс
+        containerDiv.className = 'graphics-container-wrapper';
         containerDiv.id = `graphics-container-wrapper-${this.controllerName}-${this.id}`;
 
-        // Создаём ChartRenderer для каждого элемента в graphicsSchema
+        // --- Применяем ширину ---
+        containerDiv.style.flexBasis = this.width;
+        containerDiv.style.flexShrink = 0;
+        containerDiv.style.flex = `0 0 30';//${this.width}`; // Альтернатива
+        // ---
+
         if (this.graphicsSchema && Array.isArray(this.graphicsSchema)) {
             this.graphicsSchema.forEach(graphicSchema => {
                 const chartRenderer = new ChartRenderer(graphicSchema, this.controllerName, this.logger);

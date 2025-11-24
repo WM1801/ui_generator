@@ -14,6 +14,7 @@ const exampleSchema = {
                 "type": "tabs", // Указывает, что это блок вкладок
                 "id": "tabs_main",
                 "visibility": true,
+                "width": "50%", // auto
                 "tabs": //существующие вкладки
                 [
                 {
@@ -198,11 +199,42 @@ const exampleSchema = {
             "type": "graphics",
             "id": "graphics_main",
             "visibility": true,
+            "width": "40%", //auto
             "graphics": [
                 {
-                "id": "graph",
-                "title": "Main Graph",
-                "visibility_title": true
+                    "id": "graph",
+                    "title": "Main Graph33",
+                    "visibility_title": true,
+                    "frontend_props": {
+                        "type": "line", // Тип графика
+                        "data": {
+                            "datasets": [
+                                {
+                                    "label": "Encoder Position",
+                                    "data": [], // Начальные данные
+                                    "borderColor": "rgb(75, 192, 192)",
+                                    "backgroundColor": "rgba(75, 192, 192, 0.2)",
+                                    "tension": 0.1,
+                                    "fill": false
+                                }
+                            ]
+                        },
+                        "options": {
+                            "responsive": true,
+                            "maintainAspectRatio": false,
+                            "scales": {
+                                "y": {
+                                    "beginAtZero": false
+                                }
+                            },
+                            "plugins": {
+                                 "title": {
+                                     "display": true, // <-- Должно быть "title", не "text"
+                                     "text": "Main Graph" // <-- Заголовок
+                                 }
+                            }
+                        }
+                    }
                 }
             ]
         }
@@ -300,7 +332,7 @@ setTimeout(() => {
 setTimeout(() => {
     console.log('Обновляем данные графика');
     const labels = ['Point 1', 'Point 2', 'Point 3'];
-    const data = [10, 20, 30, 40, 50, 60, 70, 80 , 90, 100];
+    const data = [10, 20, 30];
     generator.updateGraphData('graph', labels, data); // 'graph' - это id из схемы
 }, 3000);
 

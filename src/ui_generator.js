@@ -104,6 +104,41 @@ class UIGenerator {
         this._setupTabSwitching();
     }
 
+    //Настройка ResizeObserver для mainContainer ---
+    _setupMainContainerResizeObserver(mainContainerElement) {
+        if (typeof ResizeObserver !== 'undefined' && mainContainerElement) {
+            this.mainContainerResizeObserver = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    if (entry.target === mainContainerElement) {
+                        // console.log('ResizeObserver: mainContainer размеры изменились', entry.contentRect);
+                        // Вызываем resize у всех ChartRenderer'ов
+                        this._resizeAllCharts();
+                    }
+                }
+            });
+            this.mainContainerResizeObserver.observe(mainContainerElement);
+            this.logger.info('ResizeObserver установлен для mainContainer.');
+        } else {
+            this.logger.warn('ResizeObserver не поддерживается или mainContainer не найден.');
+        }
+    }
+
+    //Обновление размера всех графиков ---
+    _resizeAllCharts() {
+        // Проходим по всем элементам items
+        for (let [id, itemElement] of this.itemsMap) {
+            if (itemElement instanceof GraphicsContainerElement) {
+                // Проходим по всем ChartRenderer'ам внутри GraphicsContainerElement
+                itemElement.chartRenderers.forEach(renderer => {
+                    if (renderer.chartInstance) {
+                        // console.log('Вызов chartInstance.resize() для графика:', renderer.id);
+                        renderer.chartInstance.resize();
+                    }
+                });
+            }
+        }
+    }
+
 
     /**
      * Управляет видимостью заголовка контроллера (h1).
