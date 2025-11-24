@@ -199,41 +199,136 @@ const exampleSchema = {
             "type": "graphics",
             "id": "graphics_main",
             "visibility": true,
-            "width": "40%", //auto
+            "width": "40%",
             "graphics": [
                 {
                     "id": "graph",
                     "title": "Main Graph33",
                     "visibility_title": true,
                     "frontend_props": {
-                        "type": "line", // Тип графика
-                        "data": {
-                            "datasets": [
-                                {
-                                    "label": "Encoder Position",
-                                    "data": [], // Начальные данные
-                                    "borderColor": "rgb(75, 192, 192)",
-                                    "backgroundColor": "rgba(75, 192, 192, 0.2)",
-                                    "tension": 0.1,
+                        "type": "line",
+                        "x_axis_label": "Position (degrees)", // Подпись оси X
+                        "y_axis_label": "Parameter Value",   // Подпись оси Y
+                        "x_range": { "min": -30, "max": 30 }, // Общий диапазон по X
+                        "y_range": { "min": 0, "max": 50 }, // Фиксированный диапазон
+                        // "y_range": "auto", // Автоматическое масштабирование (альтернатива)
+        
+                        // --- НОВОЕ: Определение линий ---
+                        "lines": [
+                            {
+                                "id": "line_PLW",
+                                "visible": true,
+                                "type": "x_constant", // Вертикальная линия
+                                "params": { "a": 20},
+                                "style": { // Стили для Chart.js dataset
+                                    "borderColor": "rgba(0, 0, 255, 0.7)",
+                                    "borderWidth": 3,
+                                    "borderDash": [5, 5],
+                                    "pointRadius": 0,
                                     "fill": false
                                 }
-                            ]
-                        },
-                        "options": {
-                            "responsive": true,
-                            "maintainAspectRatio": false,
-                            "scales": {
-                                "y": {
-                                    "beginAtZero": false
+                            },
+                            {
+                                "id": "line_PLS",
+                                "visible": true,
+                                "type": "x_constant", // Вертикальная линия
+                                "params": { "a": 22},
+                                "style": { // Стили для Chart.js dataset
+                                    "borderColor": "rgba(0, 0, 255, 0.7)",
+                                    "borderWidth": 3,
+                                    "borderDash": [5, 5],
+                                    "pointRadius": 0,
+                                    "fill": false
                                 }
                             },
-                            "plugins": {
-                                 "title": {
-                                     "display": true, // <-- Должно быть "title", не "text"
-                                     "text": "Main Graph" // <-- Заголовок
-                                 }
+                            {
+                                "id": "line_PLH",
+                                "visible": true,
+                                "type": "x_constant", // Вертикальная линия
+                                "params": { "a": 24},
+                                "style": { // Стили для Chart.js dataset
+                                    "borderColor": "rgba(0, 0, 255, 0.7)",
+                                    "borderWidth": 3,
+                                    "borderDash": [5, 5],
+                                    "pointRadius": 0,
+                                    "fill": false
+                                }
+                            },
+                            {
+                                "id": "line_NLW",
+                                "visible": true,
+                                "type": "x_constant",
+                                "params": { "a": -20 },
+                                "style": {
+                                    "borderColor": "rgba(0, 0, 255, 0.7)",
+                                    "borderWidth": 3,
+                                    "borderDash": [5, 5],
+                                    "pointRadius": 0,
+                                    "fill": false
+                                }
+                            },
+                            {
+                                "id": "line_NLS",
+                                "visible": true,
+                                "type": "x_constant",
+                                "params": { "a": -22 },
+                                "style": {
+                                    "borderColor": "rgba(0, 0, 255, 0.7)",
+                                    "borderWidth": 3,
+                                    "borderDash": [5, 5],
+                                    "pointRadius": 0,
+                                    "fill": false
+                                }
+                            },
+                            {
+                                "id": "line_NLH",
+                                "visible": true,
+                                "type": "x_constant",
+                                "params": { "a": -24 },
+                                "style": {
+                                    "borderColor": "rgba(0, 0, 255, 0.7)",
+                                    "borderWidth": 3,
+                                    "borderDash": [5, 5],
+                                    "pointRadius": 0,
+                                    "fill": false
+                                }
+                            },
+                            
+                            // ... другие вертикальные линии ...
+                            {
+                                "id": "teor",
+                                "visible": true,
+                                "type": "user_formula", // Пользовательская формула y = f(x)
+                                "formula": "a * x * x + b * x + c", // //"x + a * b / c", // Выражение
+                                "params": { "a": 0.01, "b": 0, "c": 10 },
+                                "style": {
+                                    "label": "Theoretical Curve",
+                                    "borderColor": "rgba(255, 99, 132, 0.5)", // Светло-красный
+                                    "backgroundColor": "rgba(255, 99, 132, 0.1)",
+                                    "borderWidth": 2,
+                                    "borderDash": [5, 5], // Пунктир
+                                    "pointRadius": 0,
+                                    "fill": false,
+                                    "order": 0 // Порядок отрисовки (ниже)
+                                }
+                            },
+                            {
+                                "id": "prakt",
+                                "visible": true,
+                                "type": "real_time_data", // Практические данные
+                                "params": {}, // Не используется для типа real_time_data
+                                "style": {
+                                    "label": "Practical Data",
+                                    "borderColor": "rgb(75, 192, 192)",
+                                    "backgroundColor": "rgba(75, 192, 192, 0.2)",
+                                    "borderWidth": 2,
+                                    "pointRadius": 3,
+                                    "fill": false,
+                                    "order": 1 // Порядок отрисовки (выше)
+                                }
                             }
-                        }
+                        ]
+                        // --- Конец определения линий ---
                     }
                 }
             ]
@@ -335,4 +430,31 @@ setTimeout(() => {
     const data = [10, 20, 30];
     generator.updateGraphData('graph', labels, data); // 'graph' - это id из схемы
 }, 3000);
+/*
+// Обновление параметров формулы
+setTimeout(() => {
+    console.log('Обновляем параметры формулы теоретической кривой');
+    generator.updateFormulaParams('graph', 'teor', { a: 0.6, b: 12, c: 4 }); // id графика, id формулы, новые параметры
+}, 15000);
 
+// 
+
+// Скрыть линию
+setTimeout(() => {
+    console.log('Скрываем теоретическую кривую');
+    generator.updateLineVisibility('graph', 'teor', false);
+}, 25000);
+
+// Показать линию
+setTimeout(() => {
+    console.log('Показываем теоретическую кривую');
+    generator.updateLineVisibility('graph', 'teor', true);
+}, 30000);
+
+*/
+//Обновление данных реального времени
+setTimeout(() => {
+    console.log('Добавляем точку к практическим данным');
+    // generator.updateLineData('graph', 'prakt', {x: 45, y: 15}); // Добавить одну точку
+    generator.updateLineData('graph', 'prakt', [{x: 5, y: 12}, {x: 15, y: 15}]); // Обновить весь буфер
+}, 20000);

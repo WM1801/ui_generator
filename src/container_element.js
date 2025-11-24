@@ -165,6 +165,33 @@ class GraphicsContainerElement extends UIElement {
         return this.domElement;
     }
 
+    updateLineData(graphId, lineId, newData) {
+        const renderer = this.chartRenderers.find(r => r.id === graphId);
+        if (renderer) {
+            renderer.updateLineData(lineId, newData);
+        } else {
+            this.logger.warn(`График с id '${graphId}' не найден в GraphicsContainerElement для обновления данных линии.`);
+        }
+    }
+
+    updateFormulaParams(graphId, formulaId, newParams) {
+        const renderer = this.chartRenderers.find(r => r.id === graphId);
+        if (renderer) {
+            renderer.updateFormulaParams(formulaId, newParams);
+        } else {
+            this.logger.warn(`График с id '${graphId}' не найден в GraphicsContainerElement для обновления параметров формулы.`);
+        }
+    }
+
+    updateLineVisibility(graphId, lineId, isVisible) {
+        const renderer = this.chartRenderers.find(r => r.id === graphId);
+        if (renderer) {
+            renderer.updateLineVisibility(lineId, isVisible);
+        } else {
+            this.logger.warn(`График с id '${graphId}' не найден в GraphicsContainerElement для обновления видимости линии.`);
+        }
+    }
+
     // Методы для обновления графиков можно добавить сюда или оставить в UIGenerator
     // Пример:
     updateGraphData(graphId, labels, data) {

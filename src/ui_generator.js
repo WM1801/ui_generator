@@ -198,6 +198,35 @@ class UIGenerator {
        }
    }
 
+   //Управление линиями графика ---
+    updateLineData(graphId, lineId, newData) {
+        // Найдём GraphicsContainerElement, содержащий график
+        for (let [id, itemElement] of this.itemsMap) {
+            if (itemElement instanceof GraphicsContainerElement) {
+                itemElement.updateLineData(graphId, lineId, newData);
+                // break; // Если графики уникальны, можно прервать
+            }
+        }
+    }
+
+    updateFormulaParams(graphId, formulaId, newParams) {
+        for (let [id, itemElement] of this.itemsMap) {
+            if (itemElement instanceof GraphicsContainerElement) {
+                itemElement.updateFormulaParams(graphId, formulaId, newParams);
+                // break;
+            }
+        }
+    }
+
+    updateLineVisibility(graphId, lineId, isVisible) {
+        for (let [id, itemElement] of this.itemsMap) {
+            if (itemElement instanceof GraphicsContainerElement) {
+                itemElement.updateLineVisibility(graphId, lineId, isVisible);
+                // break;
+            }
+        }
+    }
+
     /**
      * Управляет видимостью левой колонки (вкладки) и flex-свойствами обеих колонок.
      * @param {boolean} isVisible - true для отображения, false для скрытия.
