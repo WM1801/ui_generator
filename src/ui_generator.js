@@ -168,20 +168,39 @@ class UIGenerator {
 
 
     // --- Управление графиками через itemsMap ---
-    updateGraphData(graphId, labels, data) {
-        // Найдём GraphicsContainerElement, который содержит нужный graphId
-        let found = false;
+    // --- УДАЛЁН ИЛИ ОБНОВЛЁН: updateGraphData ---
+    // updateGraphData(graphId, labels, data) {
+    //     // Этот метод предполагал обновление *всех* данных графика по старой логике
+    //     // и вызывал renderer.updateData, которого больше нет.
+    //     // Удалим его или изменим, чтобы он использовал updateLineData.
+    //     // Предположим, что labels и data - это точки для одной из линий.
+    //     // Тогда нужно знать, *какую* линию обновлять.
+    //     // Лучше использовать updateLineData(graphId, lineId, newData).
+    //     this.logger.warn('updateGraphData устарел. Используйте updateLineData для обновления конкретных линий.');
+    // }
+    // ---
+    // Или, если вы хотите оставить его для *одной* линии, например, 'prakt', и передавать массив точек:
+    updateGraphData(graphId, newData) {
+        this.logger.warn('updateGraphData устарел. Используйте updateLineData(graphId, lineId, newData).');
+        // Предположим, что newData - это массив точек для линии 'prakt'
+        // и что 'prakt' - это идентификатор линии данных реального времени.
+        this.updateLineData(graphId, 'prakt', newData);
+    }
+
+    // ---  updateLineData ---
+    updateLineData(graphId, lineId, newData) {
+        // Найдём GraphicsContainerElement, содержащий нужный ChartRenderer
         for (let [id, itemElement] of this.itemsMap) {
             if (itemElement instanceof GraphicsContainerElement) {
-                // GraphicsContainerElement сам ищет нужный ChartRenderer по graphId
-                itemElement.updateGraphData(graphId, labels, data);
-                found = true; // Если нам нужно, чтобы обновлялся только один
-                // break; // Убрано, чтобы обновить *все* GraphicsContainerElement'ы с графиком graphId
+                // Проверим, содержит ли он график с нужным graphId
+                // Предположим, GraphicsContainerElement хранит свои ChartRenderer'ы в Map
+                // или имеет метод для поиска по id
+                // itemElement.updateLineData(graphId, lineId, newData); // <-- Вызов метода у GraphicsContainerElement
+                itemElement.updateLineData(graphId, lineId, newData);
+                return; // Нашли и вызвали, выходим
             }
         }
-        if (!found) {
-            this.logger.warn(`updateGraphData: График с id '${graphId}' не найден ни в одном GraphicsContainerElement.`);
-        }
+        this.logger.warn(`updateLineData: График с id '${graphId}' не найден.`);
     }
 
     updateGraphTitleVisibility(graphId, isVisible) {

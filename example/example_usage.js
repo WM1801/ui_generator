@@ -210,7 +210,7 @@ const exampleSchema = {
                         "x_axis_label": "Position (degrees)", // Подпись оси X
                         "y_axis_label": "Parameter Value",   // Подпись оси Y
                         "x_range": { "min": -30, "max": 30 }, // Общий диапазон по X
-                        "y_range": { "min": 0, "max": 50 }, // Фиксированный диапазон
+                        "y_range": { "min": 0, "max": 100 }, // Фиксированный диапазон
                         // "y_range": "auto", // Автоматическое масштабирование (альтернатива)
         
                         // --- НОВОЕ: Определение линий ---
@@ -220,6 +220,9 @@ const exampleSchema = {
                                 "visible": true,
                                 "type": "x_constant", // Вертикальная линия
                                 "params": { "a": 20},
+                                "frontend_props": { // <-- frontend_props для конкретной линии
+                                    "round_precision": 0.1 // <-- НОВОЕ: Округлять X до 0.1 (одна десятая)
+                                },
                                 "style": { // Стили для Chart.js dataset
                                     "borderColor": "rgba(0, 0, 255, 0.7)",
                                     "borderWidth": 3,
@@ -233,6 +236,9 @@ const exampleSchema = {
                                 "visible": true,
                                 "type": "x_constant", // Вертикальная линия
                                 "params": { "a": 22},
+                                "frontend_props": { // <-- frontend_props для конкретной линии
+                                    "round_precision": 0.1 // <-- НОВОЕ: Округлять X до 0.1 (одна десятая)
+                                },
                                 "style": { // Стили для Chart.js dataset
                                     "borderColor": "rgba(0, 0, 255, 0.7)",
                                     "borderWidth": 3,
@@ -246,6 +252,9 @@ const exampleSchema = {
                                 "visible": true,
                                 "type": "x_constant", // Вертикальная линия
                                 "params": { "a": 24},
+                                "frontend_props": { // <-- frontend_props для конкретной линии
+                                    "round_precision": 0.1 // <-- НОВОЕ: Округлять X до 0.1 (одна десятая)
+                                },
                                 "style": { // Стили для Chart.js dataset
                                     "borderColor": "rgba(0, 0, 255, 0.7)",
                                     "borderWidth": 3,
@@ -259,6 +268,9 @@ const exampleSchema = {
                                 "visible": true,
                                 "type": "x_constant",
                                 "params": { "a": -20 },
+                                "frontend_props": { // <-- frontend_props для конкретной линии
+                                    "round_precision": 0.1 // <-- НОВОЕ: Округлять X до 0.1 (одна десятая)
+                                },
                                 "style": {
                                     "borderColor": "rgba(0, 0, 255, 0.7)",
                                     "borderWidth": 3,
@@ -272,6 +284,9 @@ const exampleSchema = {
                                 "visible": true,
                                 "type": "x_constant",
                                 "params": { "a": -22 },
+                                "frontend_props": { // <-- frontend_props для конкретной линии
+                                    "round_precision": 0.1 // <-- НОВОЕ: Округлять X до 0.1 (одна десятая)
+                                },
                                 "style": {
                                     "borderColor": "rgba(0, 0, 255, 0.7)",
                                     "borderWidth": 3,
@@ -285,6 +300,9 @@ const exampleSchema = {
                                 "visible": true,
                                 "type": "x_constant",
                                 "params": { "a": -24 },
+                                "frontend_props": { // <-- frontend_props для конкретной линии
+                                    "round_precision": 0.1 // <-- НОВОЕ: Округлять X до 0.1 (одна десятая)
+                                },
                                 "style": {
                                     "borderColor": "rgba(0, 0, 255, 0.7)",
                                     "borderWidth": 3,
@@ -300,7 +318,10 @@ const exampleSchema = {
                                 "visible": true,
                                 "type": "user_formula", // Пользовательская формула y = f(x)
                                 "formula": "a * x * x + b * x + c", // //"x + a * b / c", // Выражение
-                                "params": { "a": 0.01, "b": 0, "c": 10 },
+                                "params": { "a": 0.1, "b": 0, "c": 10 },
+                                "frontend_props": { // <-- frontend_props для конкретной линии
+                                    "round_precision": 0.1 // <-- НОВОЕ: Округлять X до 0.1 (одна десятая)
+                                },
                                 "style": {
                                     "label": "Theoretical Curve",
                                     "borderColor": "rgba(255, 99, 132, 0.5)", // Светло-красный
@@ -317,6 +338,9 @@ const exampleSchema = {
                                 "visible": true,
                                 "type": "real_time_data", // Практические данные
                                 "params": {}, // Не используется для типа real_time_data
+                                "frontend_props": { // <-- frontend_props для конкретной линии
+                                    "round_precision": 0.1 // <-- НОВОЕ: Округлять X до 0.1 (одна десятая)
+                                },
                                 "style": {
                                     "label": "Practical Data",
                                     "borderColor": "rgb(75, 192, 192)",
@@ -349,6 +373,50 @@ const handlers = {
 // Создаем генератор
 const generator = new UIGenerator(exampleSchema, handlers);
 
+//Подписываемся на PARAMETER_VALUE_CHANGED ---
+const eventManager = generator.getEventManager();
+
+
+eventManager.subscribe('PARAMETER_VALUE_CHANGED', (data) => {
+    console.log('Event received:', data); // Отладка
+    if (data.controllerName === 'motor1' && data.paramId === 'volume') {
+        const volumeValue = data.value;
+        console.log(`Событие PARAMETER_VALUE_CHANGED: volume = ${volumeValue}`);
+
+        // --- НОРМАЛИЗАЦИЯ И ОТПРАВКА НА ГРАФИК ---
+        const xRange = exampleSchema.controller.items.find(item => item.id === 'graphics_main').graphics[0].frontend_props.x_range;
+        const minX = xRange.min;
+        const maxX = xRange.max;
+        const sliderMin = 0;
+        const sliderMax = 100;
+
+        // Линейная нормализация: sliderValue -> xValue
+        const xValue = ((volumeValue - sliderMin) / (sliderMax - sliderMin)) * (maxX - minX) + minX;
+
+        // Вычисляем Y (например, синусоида)
+        const yRange = exampleSchema.controller.items.find(item => item.id === 'graphics_main').graphics[0].frontend_props.y_range;
+        const minY = yRange.min;
+        const maxY = yRange.max;
+
+        const amplitude = (maxY - minY) * 0.4;
+        const baseY = minY + (maxY - minY) / 2;
+        // Используем нормализованный xValue для вычисления y
+        const yValue = baseY + amplitude * Math.sin(xValue * Math.PI / 30);
+
+        console.log(`  -> Отправка точки на график: X_norm=${xValue.toFixed(2)}, Y=${yValue.toFixed(2)}`);
+
+        // --- ИЗМЕНЕНО: Отправляем точку на график prakt ---
+        // Теперь updateLineData обновит буфер prakt, и график отобразит актуальные данные
+        generator.updateLineData('graph', 'prakt', {x: xValue, y: yValue});
+        // ---
+    }
+});
+
+eventManager.subscribe('COMMAND_CLICKED', (data) => { 
+    console.log('Event: COMMAND_CLICKED', data); 
+    // data: { commandId, controllerName } 
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     const toggleHeaderCheckbox = document.getElementById('toggle-header');
     const toggleTabsCheckbox = document.getElementById('toggle-tabs');
@@ -372,6 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleGraphCheckbox.addEventListener('change', (e) => {
         generator.updateItemVisibility("graphics_main", e.target.checked);
     });
+    
 });
 
 // Если бы был WebSocket сервер, можно было бы подключить DataConnector
@@ -453,8 +522,31 @@ setTimeout(() => {
 
 */
 //Обновление данных реального времени
-setTimeout(() => {
+// устарел
+/*setTimeout(() => {
     console.log('Добавляем точку к практическим данным');
     // generator.updateLineData('graph', 'prakt', {x: 45, y: 15}); // Добавить одну точку
-    generator.updateLineData('graph', 'prakt', [{x: 5, y: 12}, {x: 15, y: 15}]); // Обновить весь буфер
-}, 20000);
+    generator.updateLineData('graph', 'prakt', [
+        {x: -15, y: 62},
+        {x: -5, y: 12},
+        {x: 5, y: 15},
+        {x: 26, y: 45},
+        {x: 29, y: 15}, 
+       {x: -25, y: 15} ]); // Обновить весь буфер
+}, 20000);*/
+
+setTimeout(() => {
+    console.log('Обновляем данные графика (устаревший вызов, перенаправленный на prakt)');
+    const data = [
+        {x: -15, y: 62},
+        {x: -5, y: 12},
+        {x: 5, y: 15},
+        {x: 26, y: 45},
+        {x: 29, y: 15},
+        {x: -25, y: 15}
+    ]; // Теперь формат данных соответствует real_time_data
+    // generator.updateGraphData('graph', labels, data); // <-- УСТАРЕВШИЙ ВЫЗОВ
+    generator.updateLineData('graph', 'prakt', data); // <-- НОВЫЙ ВЫЗОВ
+}, 3000);
+
+

@@ -135,7 +135,7 @@ class GraphicsContainerElement extends UIElement {
         super(schema, controllerName, null, eventManager, logger);
         this.factory = factory;
         this.graphicsSchema = schema.graphics;
-        this.chartRenderers = [];
+        this.chartRenderers = new Map();;
         // --- Читаем width из схемы ---
         this.width = schema.width || 'auto';
         // ---
@@ -157,7 +157,7 @@ class GraphicsContainerElement extends UIElement {
                 const chartRenderer = new ChartRenderer(graphicSchema, this.controllerName, this.logger);
                 const chartDomElement = chartRenderer.render();
                 containerDiv.appendChild(chartDomElement);
-                this.chartRenderers.push(chartRenderer);
+                this.chartRenderers.set(chartRenderer.id, chartRenderer); // <-- Сохраняем экземпляр
             });
         }
 
@@ -166,31 +166,31 @@ class GraphicsContainerElement extends UIElement {
     }
 
     updateLineData(graphId, lineId, newData) {
-        const renderer = this.chartRenderers.find(r => r.id === graphId);
+        const renderer = this.chartRenderers.get(graphId);
         if (renderer) {
+            // Вызываем updateLineData у конкретного ChartRenderer
             renderer.updateLineData(lineId, newData);
         } else {
-            this.logger.warn(`График с id '${graphId}' не найден в GraphicsContainerElement для обновления данных линии.`);
+            this.logger.warn(`GraphicsContainerElement.updateLineData: ChartRenderer с id '${graphId}' не найден.`);
         }
     }
-
     updateFormulaParams(graphId, formulaId, newParams) {
-        const renderer = this.chartRenderers.find(r => r.id === graphId);
+        const renderer = this.chartRenderers.get(graphId);
         if (renderer) {
             renderer.updateFormulaParams(formulaId, newParams);
         } else {
-            this.logger.warn(`График с id '${graphId}' не найден в GraphicsContainerElement для обновления параметров формулы.`);
+           this.logger.warn(`GraphicsContainerElement.updateFormulaParams: ChartRenderer с id '${graphId}' не найден.`);
         }
-    }
+   }
 
-    updateLineVisibility(graphId, lineId, isVisible) {
-        const renderer = this.chartRenderers.find(r => r.id === graphId);
-        if (renderer) {
-            renderer.updateLineVisibility(lineId, isVisible);
-        } else {
-            this.logger.warn(`График с id '${graphId}' не найден в GraphicsContainerElement для обновления видимости линии.`);
-        }
+   updateLineVisibility(graphId, lineId, isVisible) {
+    const renderer = this.chartRenderers.get(graphId);
+    if (renderer) {
+        renderer.updateLineVisibility(lineId, isVisible);
+    } else {
+        this.logger.warn(`GraphicsContainerElement.updateLineVisibility: ChartRenderer с id '${graphId}' не найден.`);
     }
+}
 
     // Методы для обновления графиков можно добавить сюда или оставить в UIGenerator
     // Пример:
@@ -209,9 +209,9 @@ class GraphicsContainerElement extends UIElement {
     }
 
     destroy() {
-        // Уничтожает ChartRenderer'ы
+        // Уничтожаем все ChartRenderer'ы
         this.chartRenderers.forEach(renderer => renderer.destroy());
-        this.chartRenderers = [];
+        this.chartRenderers.clear();
         super.destroy();
     }
 }
