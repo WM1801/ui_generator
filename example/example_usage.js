@@ -211,7 +211,7 @@ const exampleSchema = {
                         "y_axis_label": "Parameter Value",   // Подпись оси Y
                         "x_range": { "min": -30, "max": 30 }, // Общий диапазон по X
                         "y_range": { "min": 0, "max": 100 }, // Фиксированный диапазон
-                        // "y_range": "auto", // Автоматическое масштабирование (альтернатива)
+                         //"y_range": "auto", // Автоматическое масштабирование (альтернатива)
         
                         // --- НОВОЕ: Определение линий ---
                         "lines": [
@@ -317,8 +317,8 @@ const exampleSchema = {
                                 "id": "teor",
                                 "visible": true,
                                 "type": "user_formula", // Пользовательская формула y = f(x)
-                                "formula": "a * x * x + b * x + c", // //"x + a * b / c", // Выражение
-                                "params": { "a": 0.1, "b": 0, "c": 10 },
+                                "formula": "a*sin(x)/x", //"a * x * x + b * x + c", // //"x + a * b / c", // Выражение
+                                "params": { "a": 10, "b": 0, "c": 10, "k": 1 },
                                 "frontend_props": { // <-- frontend_props для конкретной линии
                                     "round_precision": 0.1 // <-- НОВОЕ: Округлять X до 0.1 (одна десятая)
                                 },
