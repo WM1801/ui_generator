@@ -38,6 +38,39 @@ class UIGenerator {
         });
     }
 
+    /**
+     * Получает отображаемое имя контроллера из схемы.
+     * @returns {string}
+     */
+    getControllerDisplayName() {
+        return this.schema.controller.display_name;
+    }
+
+    /**
+     * Устанавливает новое отображаемое имя контроллера в схеме и обновляет его в DOM (если UI уже сгенерирован).
+     * @param {string} newDisplayName - Новое отображаемое имя.
+     */
+    setControllerDisplayName(newDisplayName) {
+        if (typeof newDisplayName === 'string' && newDisplayName.trim() !== '') {
+            // Обновляем схему
+            this.schema.controller.display_name = newDisplayName;
+            // Обновляем внутреннюю переменную
+            this.displayName = newDisplayName;
+
+            // Обновляем DOM, если rootElement существует
+            if (this.rootElement) {
+                const titleElement = this.rootElement.querySelector('h1');
+                if (titleElement) {
+                    titleElement.textContent = newDisplayName; // Обновляем текст заголовка
+                    // ID заголовка не меняется, он зависит от controllerName
+                }
+            }
+            this.logger.info(`Отображаемое имя контроллера изменено на: ${newDisplayName}`);
+        } else {
+            this.logger.warn(`setControllerDisplayName: Новое отображаемое имя должно быть непустой строкой. Получено: ${newDisplayName}`);
+        }
+    }
+
     setDataConnector(dataConnector) {
         this.dataConnector = dataConnector;
     }
