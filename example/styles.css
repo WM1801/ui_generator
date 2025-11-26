@@ -4,6 +4,11 @@
     overflow: auto; /* Добавить прокрутку, если содержимое превышает max-height */ }
 /*.left-column { background-color: #007bff; flex: 1;} /* Занимает доступное пространство */
 /*.right-column {background-color: #28a745; flex: 1;}*/
+.controller-container h1 {
+
+    font-size: medium;
+    padding: 0.5em;
+    }
 .tabs-container-wrapper {
     /* Можно задать начальную ширину, если нужно */
     /* flex: 1; */ /* Или конкретное значение, если нужен баланс с графиком */
@@ -33,7 +38,6 @@
     transition: background-color 0.1s, border-color 0.1s; /* Плавный переход для нажатия */
     width: 150px;
 }
-<h2 id="chart-title-motor1-graph">Main Graph</h2>
 .command-button.danger { background-color: #dc3545; color: white; border-color: #dc3545;  }
 .command-button.primary { background-color: #007bff; color: white; border-color: #007bff; width: 100; }
 .command-button.base { background-color: #e0e7ee; color: black; border-color: #6c757d; width: 100; }
@@ -105,3 +109,4 @@
     height: 100% !important; /* !important может потребоваться, чтобы перебить inline-стили Chart.js */
     /* display: block; */ /* Chart.js обычно добавляет это, но можно указать явно */
 }
+
