@@ -21,7 +21,7 @@ class EventManager {
 
     publish(eventName, data) {
         if (this.listeners[eventName]) {
-            console.log(eventName); 
+            //console.log(eventName); 
             if(eventName == "PARAMETER_VALUE_CHANGED"){
                 console.log('event, c:' + data.controllerName + " p:" + data.paramId + " d:" +data.value);
             }

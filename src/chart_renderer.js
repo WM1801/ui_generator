@@ -101,7 +101,7 @@ class ChartRenderer {
                 data: []
                 // ---
             };
-            console.log(`_initializeLines: Line ID: ${id}, Round Precision: ${lineInfo.roundPrecision}`);
+            //console.log(`_initializeLines: Line ID: ${id}, Round Precision: ${lineInfo.roundPrecision}`);
 
             this.lineData.set(id, lineInfo);
             
@@ -153,7 +153,7 @@ class ChartRenderer {
     }
 
     _calculateFormulaData(formulaString, params, min_x, max_x) {
-        console.log(`_calculateFormulaData called for formula: "${formulaString}", params:`, params);
+        //console.log(`_calculateFormulaData called for formula: "${formulaString}", params:`, params);
         const data = [];
         if (!formulaString) {
             this.logger.warn('Формула не задана.');
@@ -174,7 +174,7 @@ class ChartRenderer {
                 const y = math.evaluate(formulaString, scope);
                 data.push({ x: x, y: y });
             }
-            console.log(`_calculateFormulaData: calculated ${data.length} points for formula "${formulaString}". First few:`, data.slice(0, 3));
+            //console.log(`_calculateFormulaData: calculated ${data.length} points for formula "${formulaString}". First few:`, data.slice(0, 3));
         } catch (error) {
             this.logger.error(`Ошибка при вычислении формулы "${formulaString}":`, error.message);
             for (let x = min_x; x <= max_x; x += 1) {
@@ -186,29 +186,29 @@ class ChartRenderer {
 
     // ---  Обновление datasets Chart.js ---
     _updateChartDatasets() {
-        console.log('_updateChartDatasets called. Current needsUpdate:', this.needsUpdate, 'Current updateRequestId:', this.updateRequestId);
+        //console.log('_updateChartDatasets called. Current needsUpdate:', this.needsUpdate, 'Current updateRequestId:', this.updateRequestId);
         this.needsUpdate = true;
 
         if (!this.updateRequestId) {
-            console.log('_updateChartDatasets: Scheduling _performChartUpdate via requestAnimationFrame');
+            //console.log('_updateChartDatasets: Scheduling _performChartUpdate via requestAnimationFrame');
             this.updateRequestId = requestAnimationFrame(() => {
-                console.log('_updateChartDatasets: requestAnimationFrame callback executing');
+                //console.log('_updateChartDatasets: requestAnimationFrame callback executing');
                 this._performChartUpdate();
             });
         } else {
-             console.log('_updateChartDatasets: requestAnimationFrame already scheduled.');
+             //console.log('_updateChartDatasets: requestAnimationFrame already scheduled.');
         }
     }
 
         
     // ---  Фактическое обновление Chart.js ---
     _performChartUpdate() {
-        console.log('_performChartUpdate() called. needsUpdate was:', this.needsUpdate);
+        //console.log('_performChartUpdate() called. needsUpdate was:', this.needsUpdate);
         // Сбрасываем флаг и ID
         this.needsUpdate = false;
         this.updateRequestId = null;
 
-        console.log('_performChartUpdate: Processing datasets...');
+        //console.log('_performChartUpdate: Processing datasets...');
         const datasets = [];
         for (let [id, lineInfo] of this.lineData) {
             if (!lineInfo.visible) continue;
@@ -218,7 +218,7 @@ class ChartRenderer {
                 continue;
             }
 
-            console.log('_performChartUpdate: Adding dataset for line id:', id, 'with data length:', lineInfo.data.length);
+            //console.log('_performChartUpdate: Adding dataset for line id:', id, 'with data length:', lineInfo.data.length);
             const dataset = {
                 label: lineInfo.style.label || id,
                 data: lineInfo.data,
@@ -233,30 +233,30 @@ class ChartRenderer {
             datasets.push(dataset);
         }
         if (this.chartInstance) {
-            console.log('_performChartUpdate: Updating Chart.js instance datasets. New dataset count:', datasets.length);
+            //console.log('_performChartUpdate: Updating Chart.js instance datasets. New dataset count:', datasets.length);
             try {
                 this.chartInstance.data.datasets = datasets;
                 this.chartInstance.update('none');
-                console.log('_performChartUpdate: Chart.js instance updated successfully.');
+                //console.log('_performChartUpdate: Chart.js instance updated successfully.');
             } catch (error) {
-                 console.error('_performChartUpdate: Error updating Chart.js instance:', error);
+                 //console.error('_performChartUpdate: Error updating Chart.js instance:', error);
             }
         } else {
-            console.log('_performChartUpdate: Setting datasets in config (chartInstance not yet created)');
+            //console.log('_performChartUpdate: Setting datasets in config (chartInstance not yet created)');
             this.config.data.datasets = datasets;
         }
     }
 
     // --- НОВЫЙ МЕТОД: Обновление аннотаций (вертикальные линии) ---
     _updateChartAnnotations() {
-        console.log('_updateChartAnnotations called');
+        //console.log('_updateChartAnnotations called');
         const annotations = {};
         let annotationIndex = 0;
         for (let [id, lineInfo] of this.lineData) {
             if (!lineInfo.visible) continue;
 
             if (lineInfo.type === 'x_constant') {
-                console.log(`_updateChartAnnotations: Creating annotation for vertical line id: ${id}, x = ${lineInfo.params.a}`);
+                //console.log(`_updateChartAnnotations: Creating annotation for vertical line id: ${id}, x = ${lineInfo.params.a}`);
                 annotations[`annotation_${annotationIndex++}`] = {
                     type: 'line',
                     mode: 'vertical',
@@ -274,14 +274,14 @@ class ChartRenderer {
             }
         }
 
-        console.log('_updateChartAnnotations: Annotations object prepared:', annotations);
+        //console.log('_updateChartAnnotations: Annotations object prepared:', annotations);
 
         if (this.chartInstance) {
-            console.log('_updateChartAnnotations: Updating Chart.js instance annotation options');
+            //console.log('_updateChartAnnotations: Updating Chart.js instance annotation options');
             this.chartInstance.options.plugins.annotation.annotations = annotations;
             this.chartInstance.update();
         } else {
-            console.log('_updateChartAnnotations: Setting annotations in config');
+            //console.log('_updateChartAnnotations: Setting annotations in config');
             this.config.options.plugins.annotation.annotations = annotations;
         }
     }
@@ -327,7 +327,7 @@ class ChartRenderer {
     }
 
     updateLineData(lineId, newData) {
-        console.log(`updateLineData called for lineId: ${lineId}, newData:`, newData);
+        //console.log(`updateLineData called for lineId: ${lineId}, newData:`, newData);
         const lineInfo = this.lineData.get(lineId);
         if (!lineInfo) {
             this.logger.warn(`Линия с id '${lineId}' не найдена для обновления данных.`);
@@ -352,7 +352,7 @@ class ChartRenderer {
                 const roundedX = Math.round(newData.x * multiplier) / multiplier; // Стало
                 // ---
                 bufferMap.set(roundedX, newData.y);
-                console.log(`updateLineData: Updated point (x_rounded=${roundedX}, y=${newData.y}) for line ${lineId}`);
+                //console.log(`updateLineData: Updated point (x_rounded=${roundedX}, y=${newData.y}) for line ${lineId}`);
             } else if (Array.isArray(newData)) {
                 bufferMap.clear();
                 newData.forEach(point => {
@@ -364,7 +364,7 @@ class ChartRenderer {
                         bufferMap.set(roundedX, point.y);
                     }
                 });
-                console.log(`updateLineData: Replaced buffer for line ${lineId}, new points count: ${bufferMap.size}`);
+                //console.log(`updateLineData: Replaced buffer for line ${lineId}, new points count: ${bufferMap.size}`);
             } else {
                 this.logger.warn(`Неверный формат данных для updateLineData (real_time_data): ${JSON.stringify(newData)}`);
                 return;
@@ -372,7 +372,7 @@ class ChartRenderer {
 
             // Преобразуем Map в отсортированный массив
             lineInfo.data = Array.from(bufferMap.entries()).map(([x, y]) => ({ x: x, y: y })).sort((a, b) => a.x - b.x);
-            console.log(`updateLineData: Updated lineInfo.data for ${lineId}, length: ${lineInfo.data.length}. First few:`, lineInfo.data.slice(0, 3));
+            //console.log(`updateLineData: Updated lineInfo.data for ${lineId}, length: ${lineInfo.data.length}. First few:`, lineInfo.data.slice(0, 3));
 
             this._updateChartDatasets(); // Вызовет RAF
 

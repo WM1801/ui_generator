@@ -219,6 +219,9 @@ class FlagsParameterElement extends ParameterElement {
                         value: newValue,
                         controllerName: this.controllerName
                     });
+                    if (this.handlers && typeof this.handlers.onParameterChange === 'function') {
+                        this.handlers.onParameterChange(this.id, newValue);
+                    }
                     
                 });
                 // ---
@@ -328,6 +331,9 @@ class SliderParameterElement extends ParameterElement {
                 value: value,
                 controllerName: this.controllerName
             });
+            if (this.handlers && typeof this.handlers.onParameterChange === 'function') {
+                this.handlers.onParameterChange(this.id, value);
+            }
         });
 
         sliderContainer.appendChild(slider);
@@ -406,6 +412,9 @@ class SelectParameterElement extends ParameterElement {
                 value: value,
                 controllerName: this.controllerName
             });
+            if (this.handlers && typeof this.handlers.onParameterChange === 'function') {
+                this.handlers.onParameterChange(this.id, value);
+            }
         });
 
         controlDiv.appendChild(select);
@@ -487,6 +496,9 @@ class RadioParameterElement extends ParameterElement {
                         value: value,
                         controllerName: this.controllerName
                     });
+                    if (this.handlers && typeof this.handlers.onParameterChange === 'function') {
+                        this.handlers.onParameterChange(this.id, value);
+                    }
                 }
             });
         });
