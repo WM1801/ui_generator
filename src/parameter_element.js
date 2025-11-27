@@ -180,59 +180,72 @@ class FlagsParameterElement extends ParameterElement {
 
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
-                checkbox.id = `param-${this.controllerName}-${this.id}-flag-${bitKey}`;
+                // checkbox.id не устанавливаем, т.к. htmlFor не используем
                 checkbox.dataset.bit = bitKey; // <-- Сохраняем ключ (например, "0-ready")
-
+    
+                // Создаём label без htmlFor
                 const flagLabel = document.createElement('label');
-                flagLabel.htmlFor = checkbox.id;
-                flagLabel.textContent = `${bitKey}: ${description}`;
-
-                flagItem.appendChild(checkbox);
+    
+                // Создаём обёртку для checkbox (для лучшего контроля стиля при необходимости)
+                const checkboxWrapper = document.createElement('span');
+                checkboxWrapper.appendChild(checkbox); // checkbox добавляется в wrapper
+    
+                // Добавляем wrapper в label
+                flagLabel.appendChild(checkboxWrapper);
+    
+                // Добавляем пробел между чекбоксом и текстом
+                flagLabel.appendChild(document.createTextNode(' '));
+    
+                // Создаём элемент для описания
+                const descriptionSpan = document.createElement('span');
+                descriptionSpan.textContent = `${bitKey}: ${description}`;
+    
+                // Добавляем описание в label
+                flagLabel.appendChild(descriptionSpan);
+    
+                // flagItem.appendChild(checkbox); // <-- УБРАЛИ ЭТУ СТРОКУ (checkbox уже внутри label)
+    
+                // Добавляем label (в котором теперь находится checkbox и описание) в flagItem
                 flagItem.appendChild(flagLabel);
+    
                 flagsContainer.appendChild(flagItem);
-
-                //  Обработчик change ---
-                this.addEventListener(checkbox, 'change', () => {
+    
+                // Обработчик input остаётся на checkbox
+                this.addEventListener(checkbox, 'input', () => { // Используем 'input'
                     let newValue = 0;
                     const checkboxes = flagsContainer.querySelectorAll('input[type="checkbox"]');
                     checkboxes.forEach(cb => {
                         if (cb.checked) {
-                            const fullBitKey = cb.dataset.bit; // Например, "0-ready"
+                            const fullBitKey = cb.dataset.bit;
                             const dashIndex = fullBitKey.indexOf('-');
                             if (dashIndex === -1) {
                                 console.error(`Ошибка разбора dataset.bit при изменении: '${fullBitKey}' не содержит '-'`);
-                                return; // Пропускаем этот чекбокс
+                                return;
                             }
                             const potentialBitNumStr = fullBitKey.substring(0, dashIndex);
                             const bitNum = parseInt(potentialBitNumStr, 10);
                             if (isNaN(bitNum) || bitNum < 0 || bitNum > 31) {
                                 console.error(`Ошибка разбора бита при изменении: '${potentialBitNumStr}' из '${fullBitKey}' не является допустимым номером бита (0-31)`);
-                                return; // Пропускаем этот чекбокс
+                                return;
                             }
-                            newValue |= (1 << bitNum); // Устанавливаем бит
+                            newValue |= (1 << bitNum);
                         }
                     });
                     this.currentValue = newValue;
-                    // Публикуем событие с новым значением
                     this.eventManager.publish('PARAMETER_VALUE_CHANGED', {
                         paramId: this.id,
                         value: newValue,
-                        controllerName: this.controllerName
+                        controllerName: this.controllerName // <-- controllerName из this
                     });
                     if (this.handlers && typeof this.handlers.onParameterChange === 'function') {
                         this.handlers.onParameterChange(this.id, newValue);
                     }
-                    
                 });
-                // ---
             });
-            //Применяем значение по умолчанию к чекбоксам после их создания ---
-            // Вызываем updateValue с defaultValue, чтобы установить начальное состояние
+    
             if (this.defaultValue !== undefined) {
-                // Обновляем UI, чтобы отразить defaultValue
                 this.updateValue(this.currentValue);
             }
-
         } else {
              console.log('FlagsParameterElement.render: frontendProps.bits НЕ найдены!');
         }
@@ -451,17 +464,35 @@ class SelectParameterElement extends ParameterElement {
 class RadioParameterElement extends ParameterElement {
     constructor(schema, controllerName, handlers, eventManager, logger = GlobalLogger) {
         super(schema, controllerName, handlers, eventManager, logger);
-        // Значение по умолчанию для radio
-        this.currentValue = this.defaultValue !== undefined ? this.defaultValue : '';
+
         // Опции для radio должны быть в frontendProps
         this.options = this.frontendProps.options || []; // Ожидаем массив объектов { value: '...', label: '...' }
+
+        // --- Улучшенная логика определения начального значения ---
+        const defaultValueFromSchema = this.frontendProps.default; // Используем frontendProps.default
+
+        // Если defaultValue задан и присутствует в options, используем его
+        if (defaultValueFromSchema !== undefined && this.options.some(opt => opt.value === defaultValueFromSchema)) {
+            this.currentValue = defaultValueFromSchema;
+        } else if (this.options.length > 0) {
+            // Если defaultValue не задан или не найден, используем значение первой опции
+            this.currentValue = this.options[0].value;
+            // logger.info(`RadioParameterElement ${this.id}: defaultValue '${defaultValueFromSchema}' не найден в options. Установлено начальное значение на первое доступное: '${this.currentValue}'.`);
+        } else {
+            // Если нет ни defaultValue, ни опций, устанавливаем ''
+            this.currentValue = '';
+            // logger.warn(`RadioParameterElement ${this.id}: Нет ни defaultValue, ни опций. Установлено начальное значение на ''.`);
+        }
+
+        // this.defaultValue останется как есть, для справки (может быть недопустимым)
+        // this.currentValue теперь всегда допустимо
     }
 
     render() {
         const { container, controlDiv } = this._createCommonParts();
 
         const radioContainer = document.createElement('div');
-        radioContainer.className = 'radio-container'; // Дополнительный контейнер для стиля
+        radioContainer.className = 'radio-container';
 
         this.options.forEach((optionData, index) => {
             const radioItem = document.createElement('div');
@@ -470,32 +501,52 @@ class RadioParameterElement extends ParameterElement {
             const radio = document.createElement('input');
             radio.type = 'radio';
             radio.name = `param-${this.controllerName}-${this.id}-radio-group`; // Группа для радио
-            radio.id = `param-${this.controllerName}-${this.id}-radio-${index}`;
+            // radio.id не устанавливаем, т.к. htmlFor не используем
             radio.value = optionData.value;
             radio.dataset.optionIndex = index; // Для удобства поиска
 
-            // Устанавливаем checked, если значение совпадает с defaultValue/currentValue
-            if (optionData.value === this.currentValue) {
-                radio.checked = true;
-            }
+            // --- ДОБАВИМ УНИКАЛЬНЫЙ КЛАСС ---
+            radio.className = 'custom-radio-input'; // Любой уникальный класс
 
+            // Создаём label без htmlFor
             const label = document.createElement('label');
-            label.htmlFor = radio.id;
-            label.textContent = optionData.label || optionData.value;
 
-            radioItem.appendChild(radio);
+            // Создаём обёртку для radio (для лучшего контроля стиля при необходимости)
+            const radioWrapper = document.createElement('span');
+            radioWrapper.appendChild(radio); // radio добавляется в wrapper
+
+            // Добавляем wrapper в label
+            label.appendChild(radioWrapper);
+
+            // Добавляем пробел между радио и текстом
+            label.appendChild(document.createTextNode(' '));
+
+            // Создаём элемент для описания
+            const descriptionSpan = document.createElement('span');
+            descriptionSpan.textContent = optionData.label || optionData.value;
+
+            // Добавляем описание в label
+            label.appendChild(descriptionSpan);
+
+            // radioItem.appendChild(radio); // <-- УБРАЛИ ЭТУ СТРОКУ (radio уже внутри label)
+
+            // Добавляем label (в котором теперь находится radio и описание) в radioItem
             radioItem.appendChild(label);
             radioContainer.appendChild(radioItem);
 
+            // --- Используем change для radio ---
             radio.addEventListener('change', (e) => {
-                if (e.target.checked) { // Проверяем, что именно этот radio стал отмечен
+                if (e.target.checked) {
                     const value = e.target.value;
+                    // Обновляем внутреннее состояние
                     this.currentValue = value;
+                    // Публикуем событие
                     this.eventManager.publish('PARAMETER_VALUE_CHANGED', {
                         paramId: this.id,
                         value: value,
                         controllerName: this.controllerName
                     });
+                    // Вызываем обработчик
                     if (this.handlers && typeof this.handlers.onParameterChange === 'function') {
                         this.handlers.onParameterChange(this.id, value);
                     }
@@ -505,33 +556,51 @@ class RadioParameterElement extends ParameterElement {
 
         controlDiv.appendChild(radioContainer);
         this.domElement = container;
+
+        // После создания DOM, обновляем UI в соответствии с currentState
+        // Это гарантирует правильное состояние даже если DOM был пересоздан
+        this._updateUIFromState();
+
         return this.domElement;
     }
 
-    updateValue(value) {
-        if (this.domElement && this.domElement.querySelector) {
-            // Находим радио с нужным значением и отмечаем его
+    // --- Центральный метод для синхронизации UI с this.currentValue (только checked) ---
+    _updateUIFromState() {
+        if (this.domElement) {
+            // Находим все радио-кнопки в группе
             const radioInputs = this.domElement.querySelectorAll(`input[name="param-${this.controllerName}-${this.id}-radio-group"]`);
+            let foundChecked = false;
+
             radioInputs.forEach(radio => {
-                if (radio.value === value) {
+                // Снимаем checked со всех
+                radio.checked = false;
+
+                // Устанавливаем checked на тот, чьё значение совпадает с this.currentValue
+                if (radio.value === this.currentValue) {
                     radio.checked = true;
-                    this.currentValue = value; // Обновляем внутреннее значение
-                } else {
-                    radio.checked = false; // Снимаем с других
+                    foundChecked = true;
                 }
             });
+
+            // Если this.currentValue не совпадает ни с одним из value, снимаем все (останется снятым)
+            if (!foundChecked && this.currentValue !== '') {
+                // console.warn(`[RadioParameterElement] Значение '${this.currentValue}' не найдено среди опций при восстановлении UI. Сняты все флажки.`);
+                radioInputs.forEach(radio => radio.checked = false);
+            }
         }
+    }
+    // ---
+
+    updateValue(value) {
+        // Обновляем внутреннее состояние
+        this.currentValue = value;
+        // Синхронизируем UI с новым состоянием (только checked)
+        this._updateUIFromState();
     }
 
     getValue() {
-        // Возвращаем текущее значение на основе checked radio
-        if (this.domElement && this.domElement.querySelector) {
-            const checkedRadio = this.domElement.querySelector(`input[name="param-${this.controllerName}-${this.id}-radio-group"]:checked`);
-            if (checkedRadio) {
-                return checkedRadio.value;
-            }
-        }
-        return this.currentValue; // Если DOM недоступен или не отмечен ни один radio
+        // Возвращаем внутреннее состояние (источник истины)
+        return this.currentValue;
     }
 
     destroy() {

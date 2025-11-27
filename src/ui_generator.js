@@ -1,7 +1,8 @@
 class UIGenerator {
-    constructor(schema, elementHandlers, logger = GlobalLogger) {
+    constructor(controllerId, schema, elementHandlers, logger = GlobalLogger) {
         this.schema = schema;
-        this.controllerName = schema.controller.name;
+        //this.controllerName = schema.controller.name;
+        this.controllerName = controllerId;
         this.handlers = elementHandlers;
         this.logger = logger;
 
