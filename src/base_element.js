@@ -3,6 +3,8 @@ class UIElement {
     constructor(schema, controllerName, handlers, eventManager, logger = GlobalLogger) {
         this.id = schema.id || schema.param_id || schema.command_id;
         this.displayName = schema.display_name || schema.title || this.id;
+        this.displayNameLabel = schema.display_name_label; 
+        this.displayNameLabelVisible = schema.display_name_label_visible || false;
         this.visibility = schema.visibility !== false;
         this.enabled = schema.enabled !== false;
         this.controllerName = controllerName;

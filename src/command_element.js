@@ -15,7 +15,7 @@ class CommandElement extends UIElement {
         this.styleActiveClass = (schema.frontend_props && schema.frontend_props.style_active) || '';
         this.displayNameInactive = this.displayName; // display_name из схемы
         this.displayNameActive = (schema.frontend_props && schema.frontend_props.display_name_active) || this.displayNameInactive;
-    
+        this.nameLabel = this.displayNameLabel || ''; 
         // Стили и отображение для нажатия (актуально для всех)
         this.styleClickedClass = (schema.frontend_props && schema.frontend_props.style_clicked) || '';
         this.displayNameClicked = (schema.frontend_props && schema.frontend_props.display_name_clicked) || '';
@@ -30,12 +30,17 @@ class CommandElement extends UIElement {
     render() {
         const container = document.createElement('div');
         container.className = 'item';
-
-        const label = document.createElement('span');
-        label.className = 'item-label';
-        label.textContent = this.displayName;
-        container.appendChild(label);
-
+        if(this.displayNameLabelVisible === true){
+            const label = document.createElement('span');
+            label.className = 'item-label';
+            if(this.nameLabel===""){
+                label.textContent = "default_name";
+            }else {
+                label.textContent = this.nameLabel;
+            }
+            container.appendChild(label);
+        }
+        
         const controlDiv = document.createElement('div');
         controlDiv.className = 'item-control';
         container.appendChild(controlDiv);
