@@ -83,24 +83,32 @@ class CommandElement extends UIElement {
                 button.setAttribute('aria-pressed', this.state ? 'true' : 'false');
                 this._updateToggleAppearance(button, this.state);
             }
+            // Публикуем событие с новым состоянием
             this.eventManager.publish('COMMAND_TOGGLED', {
                 commandId: this.id,
                 controllerName: this.controllerName,
-                state: this.state
+                state: this.state //состояние передаётся в eventManager
             });
+
+             // Вызываем обработчик, передавая новое состояние toggle-кнопки
+            if (this.handlers && typeof this.handlers.onCommand === 'function') {
+                this.handlers.onCommand(this.id, this.state); //  передаём this.state
+            }
         } else {
+            // Для обычной кнопки состояние не меняется, всегда false
+            // Публикуем событие без состояния
             this.eventManager.publish('COMMAND_CLICKED', {
                 commandId: this.id,
                 controllerName: this.controllerName
             });
-        }
-
-        if (this.handlers && typeof this.handlers.onCommand === 'function') {
-            this.handlers.onCommand(this.id, this.state);
+            // Вызываем обработчик, не передавая состояние (или передавая null/undefined)
+            if (this.handlers && typeof this.handlers.onCommand === 'function') {
+                this.handlers.onCommand(this.id , undefined );
+            }
         }
     }
 
-    // --- НОВЫЕ МЕТОДЫ ОБРАБОТЧИКОВ ---
+    // --- МЕТОДЫ ОБРАБОТЧИКОВ ---
     handleMouseDown() {
         this.isCurrentlyClicked = true;
         const button = this.domElement.querySelector('button.command-button');
