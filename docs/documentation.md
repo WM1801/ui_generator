@@ -10,7 +10,7 @@
 
 ### Основные компоненты:
 
-*   **`UIGenerator`**: Главный класс. Принимает `stateSchema` и `elementHandlers`. Отвечает за инициализацию всех подсистем, управление видимостью контроллера и запуск процесса генерации UI.
+*   **`UIGenerator`**: Главный класс. Принимает `Идентификатор в виде строки`, `stateSchema` и `elementHandlers`. Отвечает за инициализацию всех подсистем, управление видимостью контроллера и запуск процесса генерации UI.
 *   **`ElementFactory`**: Создает экземпляры конкретных классов элементов UI (`TabsContainerElement`, `GraphicsContainerElement`, `TabElement`, `ParameterElement`, `CommandElement`, `ChartRenderer`) на основе данных из `stateSchema`. Обеспечивает слабую связанность `UIGenerator` с конкретными реализациями элементов.
 *   **`UIElement` (и потомки)**: Базовый класс для всех элементов UI *верхнего уровня* (`TabsContainerElement`, `GraphicsContainerElement`). Определяет общие свойства (id, visibility) и методы (render, update, destroy). Потомки реализуют специфичную логику.
 *   **`TabElement`, `GroupElement`, `ParameterElement`, `CommandElement`**: Классы для элементов вкладок.
@@ -508,7 +508,7 @@ const handlers = {
 };
 
 // Создаем генератор
-const generator = new UIGenerator(exampleSchema, handlers);
+const generator = new UIGenerator("controller_id", exampleSchema, handlers);
 
 // Если бы был WebSocket сервер, можно было бы подключить DataConnector
 // const dataConnector = new DataConnector(generator.getEventManager());

@@ -463,7 +463,8 @@
 #### 1. Создание UI
 
 ```javascript
-const generator = new UIGenerator(exampleSchema, handlers);
+const controllerId = "CNTR"
+const generator = new UIGenerator(controllerId, exampleSchema, handlers);
 generator.generateUI('app');
 ```
 
