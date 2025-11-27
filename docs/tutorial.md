@@ -689,3 +689,297 @@ document.addEventListener('DOMContentLoaded', () => {
     4.  Вызывает `generator.updateLineData('graph', 'prakt', {x: xValue, y: yValue})`, что **добавляет точку** к линии `prakt` на графике `graph`.
 
 Теперь вы можете "управлять" графиком `prakt` через слайдер, отправляя нормализованные (или вычисленные) значения `x` и `y`.
+
+## Пример
+```
+// --- Класс ControllerUI (для автономной работы с UIGenerator) ---
+class ControllerUI {
+    /**
+     * Создаёт экземпляр ControllerUI, который самостоятельно управляет UIGenerator.
+     * @param {string} containerElementId - ID DOM-элемента, в котором будет отрисован UI.
+     * @param {string} controllerId - Уникальный идентификатор контроллера.
+     * @param {object} uiSchema - Схема UI для этого контроллера (см. руководство).
+     * @param {Function} onCallMethodCallback - Функция для отправки команд и изменений параметров на сервер.
+     *        Ожидается в формате: (controllerId, methodOrParamId, paramsObject) => void
+     */
+    constructor(containerElementId, controllerId, uiSchema, onCallMethodCallback) {
+        this.containerElementId = containerElementId;
+        this.controllerId = controllerId;
+        this.uiSchema = { ...uiSchema }; // Копируем схему
+        this.onCallMethod = onCallMethodCallback;
+
+        this.containerElement = document.getElementById(this.containerElementId);
+        if (!this.containerElement) {
+            console.error(`Элемент с ID "${this.containerElementId}" не найден для ControllerUI контроллера "${this.controllerId}".`);
+            return;
+        }
+
+        this.uiGenerator = null; // Инициализируется в initGenerator
+        this.eventManager = null; // Ссылка на EventManager из UIGenerator
+
+        // Инициализируем UIGenerator и подписываемся на события
+        this.initGeneratorAndSubscribe();
+    }
+
+    /**
+     * Инициализирует UIGenerator, генерирует UI и подписывается на внутренние события.
+     * @private
+     */
+    initGeneratorAndSubscribe() {
+        if (!this.containerElement) {
+            console.error(`Контейнер для контроллера ${this.controllerId} не найден при инициализации.`);
+            return;
+        }
+
+        try {
+            // Определяем обработчики для UIGenerator
+            const handlers = {
+                // onParameterChange вызывается, когда пользователь меняет значение в UI
+                onParameterChange: (paramId, value) => {
+                    //console.log(`[ControllerUI] Параметр ${paramId} изменён на ${value} для контроллера ${this.controllerId} через UI.`);
+                    // Отправляем команду на сервер через внешний callback
+                    this.onCallMethod(this.controllerId, AppConstants.ClientCommandTypes.CHANGE_PARAMETER, {
+                        param_name: paramId,
+                        param_value: value
+                    });
+                },
+                // onCommand вызывается, когда пользователь нажимает кнопку
+                onCommand: (commandId, value) => {
+                    //console.log(`[ControllerUI] Команда ${commandId} выполнена для контроллера ${this.controllerId} через UI.`);
+                    // Отправляем команду на сервер через внешний callback
+                    console.log('commandId: ' + commandId, 'value: ' + value);
+                    this.onCallMethod(this.controllerId, AppConstants.ClientCommandTypes.CALL_METHOD, {
+                        param_name: commandId,
+                        param_value: value
+                    });
+                }
+                // Добавьте другие обработчики при необходимости
+            };
+
+            // Создаём экземпляр UIGenerator
+            this.uiGenerator = new UIGenerator(this.controllerId, this.uiSchema, handlers);
+
+            // Генерируем UI в указанном контейнере
+            this.uiGenerator.generateUI(this.containerElementId);
+
+            // Получаем ссылку на EventManager из UIGenerator
+            this.eventManager = this.uiGenerator.getEventManager(); // Предполагаем, что метод getEventManager() существует
+
+            if (this.eventManager) {
+                // Подписываемся на события, генерируемые UIGenerator
+                // Это позволяет нам отслеживать изменения, инициированные извне (например, через updateParameter)
+                this.eventManager.subscribe('PARAMETER_VALUE_CHANGED', (data) => {
+                    if (data.controllerName === this.controllerId) {
+                        console.log(`[ControllerUI] Внутреннее событие: параметр ${data.paramId} контроллера ${this.controllerId} изменён на ${data.value}.`);
+                        // Здесь можно выполнить дополнительные действия, если нужно,
+                        // например, обновить какие-то внутренние переменные или вызвать колбэки.
+                        // В большинстве случаев, обновление UI уже произошло через UIGenerator.
+                    }
+                });
+
+                this.eventManager.subscribe('COMMAND_CLICKED', (data) => {
+                    if (data.controllerName === this.controllerId) {
+                        console.log(`[ControllerUI] Внутреннее событие: команда ${data.commandId} контроллера ${this.controllerId} нажата.`);
+                        // Обычно обработка команды уже происходит в onCommand выше.
+                    }
+                });
+
+                this.eventManager.subscribe('ELEMENT_VISIBILITY_CHANGED', (data) => {
+                    if (data.controllerName === this.controllerId) {
+                        console.log(`[ControllerUI] Внутреннее событие: видимость элемента ${data.elementId} контроллера ${this.controllerId} изменена на ${data.visible}.`);
+                    }
+                });
+
+                // Подписка на другие события по мере необходимости
+
+            } else {
+                console.warn(`[ControllerUI] EventManager недоступен в UIGenerator для контроллера ${this.controllerId}.`);
+            }
+
+            console.log(`[ControllerUI] UIGenerator для контроллера ${this.controllerId} инициализирован и подписан на события.`);
+
+        } catch (error) {
+            console.error(`Ошибка при инициализации UIGenerator для контроллера ${this.controllerId}:`, error);
+            this.containerElement.innerHTML = `<p style="color: red;">Ошибка загрузки UI: ${error.message}</p>`;
+        }
+    }
+
+
+    /**
+     * Обновляет значение параметра в UI. Вызывается извне (например, при получении данных с сервера).
+     * @param {string} paramId - Идентификатор параметра (как определено в схеме).
+     * @param {*} value - Новое значение параметра.
+     */
+    updateParameter(paramId, value) {
+        if (this.uiGenerator) {
+            // UIGenerator обновит UI элемент и, при необходимости, вызовет событие PARAMETER_VALUE_CHANGED
+            this.uiGenerator.updateParameter(paramId, value);
+        } else {
+            console.warn(`[ControllerUI] UIGenerator не инициализирован для контроллера ${this.controllerId}. Не удалось обновить параметр ${paramId}.`);
+        }
+    }
+    
+
+    /**
+     * Обновляет данные линии графика. Вызывается извне.
+     * @param {string} graphId - Идентификатор графика (как определено в схеме).
+     * @param {string} lineId - Идентификатор линии (как определено в схеме).
+     * @param {object|Array} dataPointOrArray - Новая точка {x, y} или массив точек [{x, y}].
+     */
+    updateLineData(graphId, lineId, dataPointOrArray) {
+        if (this.uiGenerator) {
+            this.uiGenerator.updateLineData(graphId, lineId, dataPointOrArray);
+        } else {
+            console.warn(`[ControllerUI] UIGenerator не инициализирован для контроллера ${this.controllerId}. Не удалось обновить данные линии ${lineId} графика ${graphId}.`);
+        }
+    }
+
+    /**
+     * Обновляет параметры формулы для линии типа user_formula. Вызывается извне.
+     * @param {string} graphId - Идентификатор графика.
+     * @param {string} lineId - Идентификатор линии формулы.
+     * @param {object} newParams - Объект с новыми параметрами формулы.
+     */
+    updateFormulaParams(graphId, lineId, newParams) {
+        if (this.uiGenerator) {
+            this.uiGenerator.updateFormulaParams(graphId, lineId, newParams);
+        } else {
+            console.warn(`[ControllerUI] UIGenerator не инициализирован для контроллера ${this.controllerId}. Не удалось обновить параметры формулы линии ${lineId} графика ${graphId}.`);
+        }
+    }
+
+    /**
+     * Обновляет видимость элемента UI. Вызывается извне.
+     * @param {string} itemId - Идентификатор элемента (вкладки, группы, графика).
+     * @param {boolean} visible - true для отображения, false для скрытия.
+     */
+    updateItemVisibility(itemId, visible) {
+        if (this.uiGenerator) {
+            this.uiGenerator.updateItemVisibility(itemId, visible);
+        } else {
+            console.warn(`[ControllerUI] UIGenerator не инициализирован для контроллера ${this.controllerId}. Не удалось обновить видимость элемента ${itemId}.`);
+        }
+    }
+
+    /**
+     * Обновляет видимость заголовка контроллера. Вызывается извне.
+     * @param {boolean} visible - true для отображения, false для скрытия.
+     */
+    setControllerHeaderVisibility(visible) {
+        if (this.uiGenerator) {
+            this.uiGenerator.setControllerHeaderVisibility(visible);
+        } else {
+            console.warn(`[ControllerUI] UIGenerator не инициализирован для контроллера ${this.controllerId}. Не удалось обновить видимость заголовка контроллера.`);
+        }
+    }
+
+    /**
+     * Уничтожает UI, отписывается от событий и освобождает ресурсы UIGenerator.
+     */
+    destroy() {
+        console.log(`[ControllerUI] Начинаю уничтожение UI для контроллера ${this.controllerId}`);
+
+        if (this.eventManager) {
+            // Отписываемся от всех событий, чтобы избежать утечек памяти
+            // (в реальной реализации может потребоваться отписка от конкретных подписчиков)
+            // this.eventManager.unsubscribeAllForContext(this); // Если такой метод есть
+            // Или просто обнуляем ссылку, если UIGenerator сам управляется
+            this.eventManager = null;
+        }
+
+        if (this.uiGenerator) {
+            this.uiGenerator.destroyUI(); // Предполагаем, что у UIGenerator есть такой метод
+            this.uiGenerator = null;
+        }
+
+        // Очищаем контейнер, если UIGenerator не очищает его сам
+        if (this.containerElement) {
+            this.containerElement.innerHTML = '';
+        }
+
+        console.log(`[ControllerUI] UI для контроллера ${this.controllerId} уничтожен.`);
+    }
+
+    // Опционально: метод для получения текущего значения параметра из UIGenerator
+    getParameterValue(paramId) {
+        console.log(`[ControllerUI] Получаю текущее значение параметра ${paramId} для контроллера ${this.controllerId}.`);
+         if (this.uiGenerator) {
+             return this.uiGenerator.getParameterValue(paramId);
+         }
+         return undefined;
+    }
+
+    setControllerDisplayName(newDisplayName) {
+        if (this.uiGenerator) {
+            this.uiGenerator.setControllerDisplayName(newDisplayName);
+        }
+    }
+}
+
+// --- Функции для удобства работы с экземплярами ControllerUI ---
+
+// Глобальный объект для хранения экземпляров ControllerUI
+if (typeof window.ControllerUIInstances === 'undefined') {
+    window.ControllerUIInstances = {};
+}
+
+/**
+ * Создаёт экземпляр ControllerUI и добавляет его в глобальный реестр.
+ * @param {string} containerElementId - ID контейнера.
+ * @param {string} controllerId - ID контроллера.
+ * @param {object} uiSchema - Схема UI.
+ * @param {Function} onCallMethodCallback - Функция для вызова методов/параметров.
+ * @returns {ControllerUI|null} Экземпляр ControllerUI или null при ошибке.
+ */
+function createControllerUI(containerElementId, controllerId, uiSchema, onCallMethodCallback) {
+    // Удаляем старый экземпляр, если он был
+    if (window.ControllerUIInstances[controllerId]) {
+        console.log(`[ControllerUI] Удаляю старый экземпляр для контроллера ${controllerId}`);
+        window.ControllerUIInstances[controllerId].destroy();
+        delete window.ControllerUIInstances[controllerId];
+    }
+
+    const controllerUI = new ControllerUI(containerElementId, controllerId, uiSchema, onCallMethodCallback);
+    // Проверяем, успешно ли инициализировался UIGenerator
+    if (controllerUI.uiGenerator) {
+        window.ControllerUIInstances[controllerId] = controllerUI;
+        console.log(`[ControllerUI] Создан экземпляр для контроллера ${controllerId}`);
+        return controllerUI;
+    } else {
+        console.error(`[ControllerUI] Не удалось создать экземпляр для контроллера ${controllerId} из-за ошибки UIGenerator.`);
+        return null; // Возвращаем null, если инициализация UIGenerator не удалась
+    }
+}
+
+/**
+ * Удаляет экземпляр ControllerUI из реестра и уничтожает его.
+ * @param {string} controllerId - ID контроллера.
+ */
+function removeControllerUI(controllerId) {
+    if (window.ControllerUIInstances[controllerId]) {
+        window.ControllerUIInstances[controllerId].destroy();
+        delete window.ControllerUIInstances[controllerId];
+        console.log(`[ControllerUI] Удалён экземпляр для контроллера ${controllerId}`);
+    } else {
+        console.warn(`[ControllerUI] Попытка удалить несуществующий экземпляр для контроллера ${controllerId}`);
+    }
+}
+
+/**
+ * Обновляет состояние параметра существующего экземпляра ControllerUI.
+ * @param {string} controllerId - ID контроллера.
+ * @param {string} paramId - ID параметра.
+ * @param {*} value - Новое значение.
+ */
+function updateControllerUIParameter(controllerId, paramId, value) {
+    const instance = window.ControllerUIInstances[controllerId];
+    if (instance) {
+        instance.updateParameter(paramId, value);
+    } else {
+        console.warn(`[ControllerUI] Контроллер ${controllerId} не найден для обновления параметра ${paramId}.`);
+    }
+}
+
+// Экспортируем функции, если используется модульная система
+// export { ControllerUI, createControllerUI, removeControllerUI, updateControllerUIParameter };
+```
