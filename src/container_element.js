@@ -3,6 +3,7 @@ class TabElement extends UIElement {
     constructor(schema, controllerName, handlers, factory, eventManager, logger = GlobalLogger) {
         super(schema, controllerName, handlers, eventManager, logger);
         this.factory = factory;
+        this.layout = schema.layout || 'column'; // По умолчанию column
         this.children = schema.groups.map(groupSchema =>
             this.factory.createElement({ ...groupSchema, type: 'group' }, controllerName)
         ).filter(el => el !== null);
@@ -19,6 +20,9 @@ class TabElement extends UIElement {
         const contentDiv = document.createElement('div');
         contentDiv.id = `tab-${this.controllerName}-${this.id}`;
         contentDiv.classList.add('tab-content');
+
+        // Устанавливаем класс в зависимости от layout
+        contentDiv.classList.add(`tab-content-${this.layout}`);
 
         this.children.forEach(child => {
             const childDom = child.render();
@@ -37,6 +41,7 @@ class GroupElement extends UIElement {
     constructor(schema, controllerName, handlers, factory, eventManager, logger = GlobalLogger) {
         super(schema, controllerName, handlers, eventManager, logger);
         this.factory = factory;
+        this.layout = schema.layout || 'column'; // По умолчанию column
         this.children = schema.items.map(itemSchema =>
             this.factory.createElement(itemSchema, controllerName)
         ).filter(el => el !== null);
@@ -52,7 +57,8 @@ class GroupElement extends UIElement {
         fieldset.appendChild(legend);
 
         const groupContent = document.createElement('div');
-        groupContent.className = 'group-content';
+        // Устанавливаем класс в зависимости от layout
+        groupContent.className = `group-content group-${this.layout}`;
 
         this.children.forEach(child => {
             const childDom = child.render();
