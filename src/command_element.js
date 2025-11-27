@@ -11,13 +11,13 @@ class CommandElement extends UIElement {
         this.state = false;
 
         // Стили и отображение (актуально для toggle)
-        this.styleClass = (schema.frontend_props && schema.frontend_props.style) || '';
+        this.styleClass = (schema.frontend_props && schema.frontend_props.style) || 'base';
         this.styleActiveClass = (schema.frontend_props && schema.frontend_props.style_active) || '';
         this.displayNameInactive = this.displayName; // display_name из схемы
         this.displayNameActive = (schema.frontend_props && schema.frontend_props.display_name_active) || this.displayNameInactive;
         this.nameLabel = this.displayNameLabel || ''; 
         // Стили и отображение для нажатия (актуально для всех)
-        this.styleClickedClass = (schema.frontend_props && schema.frontend_props.style_clicked) || '';
+        this.styleClickedClass = (schema.frontend_props && schema.frontend_props.style_clicked) || 'clicked';
         this.displayNameClicked = (schema.frontend_props && schema.frontend_props.display_name_clicked) || '';
         this.autoReset = (schema.frontend_props && schema.frontend_props.auto_reset) || false;
         this.clickDuration = (schema.frontend_props && schema.frontend_props.click_duration) || 200; // по умолчанию 200мс
@@ -78,6 +78,36 @@ class CommandElement extends UIElement {
         controlDiv.appendChild(button);
         this.domElement = container;
         return this.domElement;
+    }
+
+     /**
+     * Устанавливает состояние кнопки (актуально для toggle-кнопок).
+     * Не вызывает событие eventManager или handlers.
+     * @param {boolean} newState - Новое состояние для toggle-кнопки.
+     * @throws {Error} Если newState не является булевым значением.
+     */
+     updateValue(newState) {
+        // Проверяем, является ли newState булевым значением
+        if (typeof newState !== 'boolean') {
+            throw new Error(`CommandElement.setState: newState must be a boolean. Received: ${typeof newState}`);
+        }
+
+        // Обновляем состояние только если это toggle-кнопка
+        if (this.isToggle) {
+            // Проверяем, изменилось ли состояние
+            if (this.state !== newState) {
+                this.state = newState;
+
+                const button = this.domElement?.querySelector('button.command-button');
+                if (button) {
+                    // Обновляем ARIA-атрибут для доступности
+                    button.setAttribute('aria-pressed', this.state ? 'true' : 'false');
+                    // Обновляем внешний вид кнопки в соответствии с новым состоянием
+                    this._updateToggleAppearance(button, this.state);
+                }
+            }
+        }
+        // Для обычных (не toggle) кнопок метод ничего не делает
     }
 
     handleClick() {
